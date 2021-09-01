@@ -12,6 +12,10 @@ def get_graph_mat(n=10, size=1):
     return coords, dist_mat
 
 def dump_graphs(FOLDER_NAME):
+    """ 
+        Utility function to clear the given folder from different graph files .tsp, .par, .tour
+        If the folder doesn't exist, it is created.
+    """
     if not os.path.exists(FOLDER_NAME):
         os.makedirs(FOLDER_NAME)
     else:
@@ -59,7 +63,7 @@ def save_tsp_graph(FOLDER_NAME, file_name, index, coords):
 """
 def create_graphs(nodes, graphs, FOLDER_NAME):
     dump_graphs(FOLDER_NAME)
-    size = 0
+    size = 10
     for number in range(1, graphs+1, 1):
         size += 10
         file_name = f'problem_{number}'

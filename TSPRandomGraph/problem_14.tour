@@ -1,6 +1,6 @@
-NAME : problem_14.1090.tour
-COMMENT : Length = 1090
-COMMENT : Found by LKH-3 [Keld Helsgaun] Tue Aug 31 16:34:52 2021
+NAME : problem_14.1173.tour
+COMMENT : Length = 1173
+COMMENT : Found by LKH-3 [Keld Helsgaun] Wed Sep  1 20:27:23 2021
 TYPE : TOUR
 DIMENSION : 100
 TOUR_SECTION
@@ -11,8 +11,8 @@ TOUR_SECTION
 37
 5
 16
-15
 45
+15
 77
 30
 9
@@ -36,16 +36,16 @@ TOUR_SECTION
 35
 81
 70
-36
 87
+36
 84
 26
 29
 10
 53
 73
-98
 7
+98
 56
 74
 76
@@ -82,8 +82,8 @@ TOUR_SECTION
 28
 24
 18
-61
 20
+61
 69
 82
 8
