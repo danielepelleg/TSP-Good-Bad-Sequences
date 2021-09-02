@@ -110,23 +110,20 @@ def create_dataset(TSP_FOLDER, DATASET_FOLDER, dataset_name, N_RECORDS):
 
     """ TODO 
                 (1)
-                - Salvare sequenza sul Dataset (Panda)
-                - Selezionare 5 Sequenze Ottime random (controllando di non prendere nodi appartenenti alle stesse sequenze)
-                - Salvare sequenze sul dataset con valore 1
+                - Serializzare il dataset
+                    - coordinate
+                    - distanze tra nodi (archi)
+                    - lunghezza percorso
 
                 (2)
-                - Utilizzare best_indexes per generare soluzioni buone
-                - Prendere la sequenza dove c'è stato lo scambio e salvarla sul dataset con valore 1
+                - Generalizzare creazione del dataset per N_RECORD 
+                - Utilizzare libreria generica per ottenere algoritmo di ML
+                - Testare algoritmo ed eventualmente ampliare il dataset aumentando N_RECORD, sequenze
+                    salvate oppure generando sequenze casuali
 
                 (3)
-                - Utilizzare worst_indexes per generare soluzioni pessime
-                - Prendere la sequenza dove c'è stato lo scambio e salvarla sul dataset con valore 0
+                - Testare algoritmo di ML con nuovi file.tsp e file.tour generati casualmente
 
-                (4)
-                - Utilizzare worst_indexes per generare soluzioni pessime
-                - Scambiare gli archi della sequenza contentente un worst index. Confrontare le diverse soluzioni e 
-                    salvare la peggiore sul dataset con valore 0
-                - Iterare il procedimento per i prossimi worst_indexes
     """
     ...
 
@@ -141,10 +138,10 @@ def create_record(sequence, coords, distance_matrix, output):
     record.append(output)
     return record
 
-def get_best_sequences(best_tour):
+def get_best_sequences(best_tour, n=5):
     random_indexes_list = []
     sequences_list = []
-    while len(sequences_list) < 5:
+    while len(sequences_list) < n:
         matching_node = False
         random_node = randint(0,100)
         sequence = get_sequence(best_tour, random_node)
