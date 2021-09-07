@@ -1,7 +1,12 @@
 import numpy as np
 import os
 from scipy.spatial import distance_matrix
+import argparse
 
+""" Create a fully connected Graph
+
+    Return a fully connected graph of n nodes and its distance matrix.
+"""
 def get_graph_mat(n=10, size=1):
     """ 
         Throws n nodes uniformly at random on a square, and build a (fully connected) graph.
@@ -11,7 +16,17 @@ def get_graph_mat(n=10, size=1):
     dist_mat = distance_matrix(coords, coords)
     return coords, dist_mat
 
-def dump_graphs(FOLDER_NAME):
+""" Save the Configuration used on a config.txt file
+"""
+def save_config(FOLDER_NAME, NR_NODES, STEP_SIZE):
+    with open(f'{FOLDER_NAME}/config.txt', 'w') as log_file:
+        log_file.write(f'NR_NODES: {NR_NODES}')
+        log_file.write(f'STEP SIZE: {STEP_SIZE}')
+        log_file.close()
+
+""" Delete all the graphs in the previous simulation
+"""
+def dump_graphs(FOLDER_NAME, NR_GRAPHS):
     """ 
         Utility function to clear the given folder from different graph files .tsp, .par, .tour
         If the folder doesn't exist, it is created.
@@ -19,7 +34,9 @@ def dump_graphs(FOLDER_NAME):
     if not os.path.exists(FOLDER_NAME):
         os.makedirs(FOLDER_NAME)
     else:
-        for i in range(1, 101, 1):
+        if os.path.exists(f'{FOLDER_NAME}/config.txt'):
+            os.remove(f'{FOLDER_NAME}/config.txt')
+        for i in range(1, NR_GRAPHS+1, 1):
             file_name = f'problem_{i}'
             if os.path.exists(f'{FOLDER_NAME}/{file_name}.tsp'):
                 os.remove(f'{FOLDER_NAME}/{file_name}.tsp')
@@ -27,13 +44,13 @@ def dump_graphs(FOLDER_NAME):
                 os.remove(f'{FOLDER_NAME}/{file_name}.par')
             if os.path.exists(f'{FOLDER_NAME}/{file_name}.tour'):
                 os.remove(f'{FOLDER_NAME}/{file_name}.tour')
-        
 
+""" Save the graph.tsp in a file
+"""
 def save_tsp_graph(FOLDER_NAME, file_name, index, coords):
     """ 
         Utility function to save the fully connected graph in a folder as a TSP file
     """
-
     # Save the TSP file
     with open(f'{FOLDER_NAME}/{file_name}.tsp', 'w') as tsp_file:
         tsp_file.write(f'NAME: {file_name}\n')
@@ -61,24 +78,38 @@ def save_tsp_graph(FOLDER_NAME, file_name, index, coords):
 """
     Create n graphs
 """
-def create_graphs(nodes, graphs, FOLDER_NAME):
-    dump_graphs(FOLDER_NAME)
+def create_graphs(nodes, graphs, FOLDER_NAME, STEP_SIZE):
+    dump_graphs(FOLDER_NAME, graphs)
     size = 10
     for number in range(1, graphs+1, 1):
-        size += 10
+        size += STEP_SIZE
         file_name = f'problem_{number}'
         coords, dist_mat = get_graph_mat(nodes, size)
-        print(type(coords))
-        print(coords)
         save_tsp_graph(FOLDER_NAME, file_name, number, coords)
+    save_config(FOLDER_NAME, nodes, STEP_SIZE)
 
 def main():
-    FOLDER_NAME = "./TSPRandomGraph"
+    # Default Configuration if no args are given
+    TEST_FOLDER = "./TSPRandomGraph-Test"
+    FOLDER = "./TSPRandomGraph"
+    STEP_SIZE = 5
     NR_NODES = 100  # Number of nodes
-    NR_GRAPHS = 100 # Number of graphs
-    SEED = 1  # A seed for the random number generator
+    NR_GRAPHS = 10 # Number of graphs
+    SEED = 1  # A seed for the random number generator #40921
     np.random.seed(SEED)
-    create_graphs(NR_NODES, NR_GRAPHS, FOLDER_NAME)
+    parser = argparse.ArgumentParser(description='Graphs Configuration')
+    parser.add_argument('--t', dest='type', type=str, help='Type of Graphs to create ( Dataset | Test )')
+    parser.add_argument('--s', dest='size', type=int, help='Step Size to add on every graph')
+    parser.add_argument('--g', dest='graphs', type=int, help='Number of graphs to create')
+    args = parser.parse_args()
+    # Set the Configuration Parameter
+    if args.type == 'test':
+        FOLDER = TEST_FOLDER
+    if args.size is not None:
+        STEP_SIZE = args.size
+    if args.graphs is not None:
+        NR_GRAPHS = args.graph
+    create_graphs(NR_NODES, NR_GRAPHS, FOLDER, STEP_SIZE)
 
 if __name__ == "__main__":
         main()    

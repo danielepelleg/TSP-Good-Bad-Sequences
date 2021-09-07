@@ -1,10 +1,18 @@
-NAME : problem_51.3994.tour
-COMMENT : Length = 3994
-COMMENT : Found by LKH-3 [Keld Helsgaun] Wed Sep  1 20:28:02 2021
+NAME : problem_51.2039.tour
+COMMENT : Length = 2039
+COMMENT : Found by LKH-3 [Keld Helsgaun] Mon Sep  6 13:42:12 2021
 TYPE : TOUR
 DIMENSION : 100
 TOUR_SECTION
 1
+27
+84
+35
+83
+53
+48
+82
+9
 79
 10
 81
@@ -94,14 +102,6 @@ TOUR_SECTION
 40
 89
 12
-83
-35
-53
-48
-82
-9
-84
-27
 97
 87
 -1

@@ -1,12 +1,16 @@
-NAME : problem_5.491.tour
-COMMENT : Length = 491
-COMMENT : Found by LKH-3 [Keld Helsgaun] Wed Sep  1 20:27:12 2021
+NAME : problem_5.283.tour
+COMMENT : Length = 283
+COMMENT : Found by LKH-3 [Keld Helsgaun] Mon Sep  6 13:41:11 2021
 TYPE : TOUR
 DIMENSION : 100
 TOUR_SECTION
 1
 54
 8
+96
+42
+79
+45
 11
 12
 5
@@ -14,22 +18,22 @@ TOUR_SECTION
 24
 27
 38
-55
 44
+55
 94
 37
 14
 39
 17
-71
 91
+71
 83
 78
 77
 36
 67
-75
 6
+75
 66
 19
 46
@@ -45,19 +49,8 @@ TOUR_SECTION
 25
 97
 53
-45
-79
-42
-23
-43
-49
-40
-10
-59
-15
-16
-60
 31
+60
 63
 20
 47
@@ -79,30 +72,37 @@ TOUR_SECTION
 22
 100
 72
-70
 87
 3
 28
 68
-18
-86
-2
-34
 98
 57
+34
+2
+86
+18
+70
+15
+16
+40
+10
+59
 82
 95
 81
 33
 26
 29
-64
 85
+64
+49
+43
+23
 58
+50
 48
 7
-50
-96
 92
 -1
 EOF
