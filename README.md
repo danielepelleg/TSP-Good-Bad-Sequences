@@ -23,9 +23,9 @@
 ## Getting Started
 
 ### Project Assignement
-    Consider the classical Traveling Salesman Problem, several instances and several solutions also for the same instance. Consider short
-    sub-sequences in the solutions and define an ML method aimed to recognize good and bad sequences. Implement a simple greedy
-    algorithm whose choices are guided by the ‘scores’ given by the ML.
+    Consider the classical Traveling Salesman Problem, several instances and several solutions also for the same 
+    instance. Consider short sub-sequences in the solutions and define an ML method aimed to recognize good and 
+    bad sequences. Implement a simple greedy algorithm whose choices are guided by the ‘scores’ given by the ML.
 
 ## LICENSE
 
