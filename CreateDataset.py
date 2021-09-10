@@ -1,4 +1,4 @@
-from random import seed, randint, shuffle
+from random import randint, shuffle
 from itertools import permutations
 from csv import writer
 from scipy.spatial import distance_matrix
@@ -48,12 +48,12 @@ def get_solution_from_file(FOLDER_NAME, file_name):
 
 """ Create the CSV dataset file
 """
-def create_csv_file(FOLDER_NAME, N_RECORDS, N_SEQUENCE):
+def create_csv_file(FOLDER_NAME, N_RECORDS, N_SEQUENCE, ERROR_TARGET):
     if not os.path.exists(FOLDER_NAME):
         os.makedirs(FOLDER_NAME)
     else:
-        if os.path.exists(f'{FOLDER_NAME}/Dataset_NRECORDS{N_RECORDS}_NSEQUENCE{N_SEQUENCE}.csv'):
-            os.remove(f'{FOLDER_NAME}/Dataset_NRECORDS{N_RECORDS}_NSEQUENCE{N_SEQUENCE}.csv')
+        if os.path.exists(f'{FOLDER_NAME}/Dataset_NRECORDS{N_RECORDS}_NSEQUENCE{N_SEQUENCE}_ERROR{ERROR_TARGET}.csv'):
+            os.remove(f'{FOLDER_NAME}/Dataset_NRECORDS{N_RECORDS}_NSEQUENCE{N_SEQUENCE}_ERROR{ERROR_TARGET}.csv')
     alphabet = list(ascii_uppercase)
     columns = []
     
@@ -67,7 +67,7 @@ def create_csv_file(FOLDER_NAME, N_RECORDS, N_SEQUENCE):
     columns.append('Length')
     columns.append('Good')
 
-    with open(f'{FOLDER_NAME}/Dataset_NRECORDS{N_RECORDS}_NSEQUENCE{N_SEQUENCE}.csv', 'w', newline='') as csv_file:
+    with open(f'{FOLDER_NAME}/Dataset_NRECORDS{N_RECORDS}_NSEQUENCE{N_SEQUENCE}_ERROR{ERROR_TARGET}.csv', 'w', newline='') as csv_file:
         # creating a csv writer object 
         csvwriter = writer(csv_file)
         # writing the fields 
@@ -75,8 +75,8 @@ def create_csv_file(FOLDER_NAME, N_RECORDS, N_SEQUENCE):
 
 """ Add a record in the CSV dataset file
 """
-def add_record_to_csv(FOLDER_NAME, N_RECORDS, N_SEQUENCE, record):
-    with open(f'{FOLDER_NAME}/Dataset_NRECORDS{N_RECORDS}_NSEQUENCE{N_SEQUENCE}.csv', 'a', newline='') as csv_file:
+def add_record_to_csv(FOLDER_NAME, N_RECORDS, N_SEQUENCE, ERROR_TARGET, record):
+    with open(f'{FOLDER_NAME}/Dataset_NRECORDS{N_RECORDS}_NSEQUENCE{N_SEQUENCE}_ERROR{ERROR_TARGET}.csv', 'a', newline='') as csv_file:
         # Pass this file object to csv.writer() and get a writer object
         writer_object = writer(csv_file)
     
@@ -99,10 +99,10 @@ def create_record(sequence, coords, distance_matrix, output):
 
 """ Create the Dataset
 """
-def create_dataset(TSP_FOLDER, DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET):
+def create_dataset(N_GRAPHS, TSP_FOLDER, DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET):
     n_samples = N_RECORDS//4 
-    create_csv_file(DATASET_FOLDER, N_RECORDS, N_SEQUENCE)
-    for i in range(1, 201):
+    create_csv_file(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET)
+    for i in range(1, N_GRAPHS+1):
         file_name = f'problem_{i}'
         print(f'Problem: {file_name}\n')
         coords, distance_matrix = get_coordinates_from_file(TSP_FOLDER, file_name)
@@ -110,40 +110,40 @@ def create_dataset(TSP_FOLDER, DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARG
         random_tour = get_random_tour(tour_length, distance_matrix)
         #print(f'Tour Length: {tour_length} \nTOUR: {tour}')
     
-        sorted_errors = get_sorted_errors(tour, tour_length, distance_matrix)
-        #print(f'SORTED ERRORS: {sorted_errors}\n\n')
+        sorted_errors, sequences_dict = get_sorted_errors(tour, tour_length, distance_matrix, N_SEQUENCE)
+        #print(f'SORTED ERRORS: {sorted_errors}\n SEQUENCE DICTIONART: {sequences_dict}\n') # Performing one enxchange for node
         
         worst_indexes = [ x for x in list(sorted_errors)[:n_samples] ]
-        best_indexes = [ x for x in list(sorted_errors)[-n_samples:] ] 
+        best_indexes = [ x for x in list(sorted_errors) if sorted_errors[x] <= ERROR_TARGET]
         #print(f'Best Indexes: {best_indexes} \nWorst Indexes: {worst_indexes}')
         
         best_sequences_list = get_unique_sequences(tour, n_samples, N_SEQUENCE)
-        #print(f'Best Sequences: {best_sequences_list}\n')
-        good_sequences_list = get_good_sequences(tour, best_indexes, n_samples, N_SEQUENCE)
-        #print(f'Good Sequences: {good_sequences_list}\n')
+        print(f'Best Sequences: {best_sequences_list}\n')
+        good_sequences_list = get_good_sequences(best_indexes, sequences_dict, n_samples)
+        print(f'Good Sequences: {good_sequences_list}\n')
         bad_sequences_list = get_bad_sequences(tour, worst_indexes, distance_matrix, N_SEQUENCE, ERROR_TARGET)
         # Additional samples to add as a worst sequence in the dataset 
         # if not enough bad sequences are found
         additional_samples = n_samples - len(bad_sequences_list)
-        #print(f'Bad Sequences: {bad_sequences_list}\tAdditional Samples: {additional_samples}\n')
+        print(f'Bad Sequences: {bad_sequences_list}\tAdditional Samples: {additional_samples}\n')
         worst_sequences_list = get_random_sequences(random_tour, n_samples + additional_samples, N_SEQUENCE)
-        #print(f'Worst Sequences: {worst_sequences_list}\n')
+        print(f'Worst Sequences: {worst_sequences_list}\n')
         
         for seq in best_sequences_list:
             record = create_record(seq, coords, distance_matrix, 1)
-            add_record_to_csv(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, record)
+            add_record_to_csv(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET, record)
 
         for seq in good_sequences_list:
             record = create_record(seq, coords, distance_matrix, 1)
-            add_record_to_csv(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, record)
+            add_record_to_csv(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET, record)
         
         for seq in bad_sequences_list:
             record = create_record(seq, coords, distance_matrix, 0)
-            add_record_to_csv(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, record)
+            add_record_to_csv(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET, record)
         
         for seq in worst_sequences_list:
             record = create_record(seq, coords, distance_matrix, 0)
-            add_record_to_csv(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, record)
+            add_record_to_csv(DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET, record)
 
 """ Create a Random Tour
 """
@@ -231,16 +231,15 @@ def get_random_sequences(tour, n_samples, N_SEQUENCE):
         - n_samples : number of samples to insert in the sequences list
         - N_SEQUENCE : the number of nodes in the sequence
 """
-def get_good_sequences(tour, indexes_list, n_samples, N_SEQUENCE):
+def get_good_sequences(best_indexes, sequences_dictionary, n_samples):
     sequences_list = []
-    for i in range(n_samples):
-        new_tour = tour.copy()
-        # Exchange the i-node with its next one
-        new_tour[indexes_list[i]] = tour[(indexes_list[i]+1) % len(tour)]
-        new_tour[(indexes_list[i]+1) % len(tour)] = tour[indexes_list[i]]
-        new_sequence = get_sequence(new_tour, indexes_list[i], N_SEQUENCE)
-        #print(f'Index: {indexes_list[i]}, New Sequence: {new_sequence}')
-        sequences_list.append(new_sequence)
+    candidates = len(best_indexes)-1
+    step = candidates/(n_samples-1)
+    if step < 1.0:
+        sequences_list.append(sequences_dictionary[i] for i in best_indexes)
+    else:
+        for i in range(n_samples):
+            sequences_list.append(sequences_dictionary[best_indexes[round(i*step)]])
     return sequences_list
 
 """ Get Bad Sequences on a Graph by doing some permutations.
@@ -279,9 +278,49 @@ def get_bad_sequences(tour, worst_indexes, distance_matrix, N_SEQUENCE, ERROR_TA
     
     # Sort the Dictionary starting from the highest errors
     error_dict_sorted = {k: v for k, v in sorted(error_dict.items(), key=lambda item: item[1], reverse = True)}
-    # Add the element to the list choosing them if they are suitable with the given target
-    worst_sequences = [list(seq) for seq in list(error_dict_sorted.keys())[0:len(worst_indexes)] if error_dict_sorted[seq] > ERROR_TARGET] # [[seq1], [seq2], ..., [seq5]] 
+    # print(f'Length Error Dictionary Sorted: {len(error_dict_sorted)}, Middle Value: {list(error_dict_sorted.values())[len(error_dict_sorted)//2]}')
+    # print(error_dict_sorted)
 
+    # Take as the smallest error the one in the middle of the dictionary
+    smallest_error_index = len(error_dict_sorted)//2
+    smallest_error = list(error_dict_sorted.values())[smallest_error_index]
+    # Find the smallest error which is > ERROR_TARGET
+    # Add the element to the list choosing them if they are suitable with the given target
+    while(smallest_error > ERROR_TARGET):
+        if smallest_error_index == len(error_dict_sorted)-1:
+            break
+        next_smallest_error = list(error_dict_sorted.values())[smallest_error_index+1]
+        if next_smallest_error > ERROR_TARGET:
+            smallest_error_index += 1
+            smallest_error = next_smallest_error
+        else: break
+    while(smallest_error <= ERROR_TARGET):
+        if smallest_error_index == 0: 
+            return []
+        smallest_error_index -= 1
+        smallest_error = list(error_dict_sorted.values())[smallest_error_index]
+    # Calculate the step to use to take the sequence to add in the dataset
+    #(f'Smallest Error Index: {smallest_error_index}, Smallest Error: {smallest_error}')
+    step = smallest_error_index/(len(worst_indexes)-1)
+    #print(f'Step: {step}')
+    worst_sequences = []
+    worst_errors = []
+    # If the number os samples to take is major than the errors available 
+    # all the sequence available are taken to be added in the dataset
+    if step < 1.0:
+        while(smallest_error_index >= 0):
+            worst_errors.append(list(error_dict_sorted.values())[smallest_error_index])
+            worst_sequences.append(list(error_dict_sorted.keys())[smallest_error_index])
+            smallest_error_index -= 1
+    # Add a sequence increasing one step at time the index used to choose 
+    else:
+        for i in range(len(worst_indexes)):
+            index_node = smallest_error_index-(round(i*step))
+            worst_errors.append(list(error_dict_sorted.values())[index_node])
+            worst_sequences.append(list(error_dict_sorted.keys())[index_node])
+    
+    #print(f'Worst Errors: {worst_errors}')
+    #print(f'Worst Sequences: {worst_sequences}')
     return worst_sequences
 
 """ Create a New Tour replacing a Sequence
@@ -330,8 +369,9 @@ def get_sequence(tour, index, N_SEQUENCE):
         - tour_length : the length of the tour to compare
         - distance_matrix : the matrix containing the distances of each node
 """
-def get_sorted_errors(tour, tour_length, distance_matrix):
-    error_dict = {} # {index: error}
+def get_sorted_errors(tour, tour_length, distance_matrix, N_SEQUENCE):
+    errors_dict = {} # {index: error}
+    sequences_dict = {} # {index: [seq]}
     #print(f'ORIGINAL TOUR: {tour}')
     for i in range(0, len(tour)):
         # Create a new solution starting from the best one
@@ -339,15 +379,17 @@ def get_sorted_errors(tour, tour_length, distance_matrix):
         # Exchange the i-node with its next one
         new_tour[i] = tour[(i+1) % len(tour)]
         new_tour[(i+1) % len(tour)] = tour[i]
+        new_sequence = get_sequence(new_tour, i, N_SEQUENCE)
         # Calculate the new tour length
         new_tour_length = get_tour_length(new_tour, distance_matrix)
         # Calculate the error between the new tour and the best known
         error = get_tour_error(tour_length, new_tour_length)
-        error_dict[i] = error # {index: error, ...}
+        errors_dict[i] = error # {index: error, ...}
+        sequences_dict[i] = new_sequence # {index: seq, ...}
 
     # Sort the Dictionary starting from the highest errors
-    error_dict_sorted = {k: v for k, v in sorted(error_dict.items(), key=lambda item: item[1], reverse = True)}
-    return error_dict_sorted
+    errors_dict_sorted = {k: v for k, v in sorted(errors_dict.items(), key=lambda item: item[1], reverse = True)}
+    return errors_dict_sorted, sequences_dict
 
 """
     Return the tour length
@@ -402,16 +444,20 @@ def main():
     DATASET_FOLDER = './Dataset'
 
     # Default Configuration if no args are given
+    N_GRAPHS = 500
     N_NODES = 100
     N_RECORDS = 80
     N_SEQUENCE = 5
     ERROR_TARGET = 4
     parser = argparse.ArgumentParser(description='Dataset Configuration')
+    parser.add_argument('--g', dest='graphs', type=int, help='Number of graphs to use')
     parser.add_argument('--r', dest='record', type=int, help='Record to Save for each Graph')
     parser.add_argument('--s', dest='sequence_nodes', type=int, help='Nodes in each sequence')
-    parser.add_argument('--e', dest='error_target', type=int, help='Error target on the tour')
+    parser.add_argument('--e', dest='error_target', type=float, help='Error target on the tour')
     args = parser.parse_args()
     # Set the Configuration Parameter
+    if args.graphs is not None:
+        N_GRAPHS = args.graphs
     if args.record is not None:
         N_RECORDS = args.record
     if args.sequence_nodes is not None:
@@ -421,8 +467,8 @@ def main():
     # Check if the Parameters are correct
     validate_input(N_NODES, N_SEQUENCE, N_RECORDS, ERROR_TARGET)
 
-    #print(f'Number of Records for each Graph: {N_RECORDS}, Number of Nodes in a Sequence: {N_SEQUENCE}')
-    create_dataset(TSP_FOLDER, DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET)
+    print(f'Number of Records for each Graph: {N_RECORDS}, Number of Nodes in a Sequence: {N_SEQUENCE}')
+    create_dataset(N_GRAPHS, TSP_FOLDER, DATASET_FOLDER, N_RECORDS, N_SEQUENCE, ERROR_TARGET)
 
 if __name__ == "__main__":
     main()    
