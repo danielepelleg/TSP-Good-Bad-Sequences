@@ -2,6 +2,7 @@ import numpy as np
 import os
 from scipy.spatial import distance_matrix
 import argparse
+from time import strftime
 
 """ Create a fully connected Graph
 
@@ -18,10 +19,13 @@ def get_graph_mat(n=10, size=1):
 
 """ Save the Configuration used on a config.txt file
 """
-def save_config(FOLDER_NAME, NR_NODES, STEP_SIZE):
+def save_config(FOLDER_NAME, NR_NODES, STEP_SIZE, SEED):
+    today_date = strftime('%d-%m-%Y-%H.%M')
     with open(f'{FOLDER_NAME}/config.txt', 'w') as log_file:
-        log_file.write(f'NR_NODES: {NR_NODES}')
-        log_file.write(f'STEP SIZE: {STEP_SIZE}')
+        log_file.write(f'NR_NODES: {NR_NODES}\n')
+        log_file.write(f'STEP SIZE: {STEP_SIZE}\n')
+        log_file.write(f'SEED: {SEED}\n')
+        log_file.write(f'DATE: {today_date}\n')
         log_file.close()
 
 """ Delete all the graphs in the previous simulation
@@ -47,7 +51,7 @@ def dump_graphs(FOLDER_NAME, NR_GRAPHS):
 
 """ Save the graph.tsp in a file
 """
-def save_tsp_graph(FOLDER_NAME, file_name, index, coords):
+def save_tsp_graph(FOLDER_NAME, file_name, index, coords, size):
     """ 
         Utility function to save the fully connected graph in a folder as a TSP file
     """
@@ -55,7 +59,7 @@ def save_tsp_graph(FOLDER_NAME, file_name, index, coords):
     with open(f'{FOLDER_NAME}/{file_name}.tsp', 'w') as tsp_file:
         tsp_file.write(f'NAME: {file_name}\n')
         tsp_file.write(f'TYPE: TSP\n')
-        tsp_file.write(f'COMMENT: 100-nodes problem {index}\n')
+        tsp_file.write(f'COMMENT: 100-nodes problem {index} size-{size}\n')
         tsp_file.write(f'DIMENSION: 100\n')
         tsp_file.write(f'EDGE_WEIGHT_TYPE : EUC_2D\n')
         tsp_file.write(f'NODE_COORD_SECTION\n')
@@ -81,12 +85,11 @@ def save_tsp_graph(FOLDER_NAME, file_name, index, coords):
 def create_graphs(nodes, graphs, FOLDER_NAME, STEP_SIZE):
     dump_graphs(FOLDER_NAME, graphs)
     size = 10
-    for number in range(1, graphs+1, 1):
+    for number in range(1, graphs+1):
         size += STEP_SIZE
         file_name = f'problem_{number}'
         coords, dist_mat = get_graph_mat(nodes, size)
-        save_tsp_graph(FOLDER_NAME, file_name, number, coords)
-    save_config(FOLDER_NAME, nodes, STEP_SIZE)
+        save_tsp_graph(FOLDER_NAME, file_name, number, coords, size)
 
 def main():
     # Default Configuration if no args are given
@@ -94,7 +97,7 @@ def main():
     FOLDER = "./TSPRandomGraph"
     STEP_SIZE = 5
     NR_NODES = 100  # Number of nodes
-    NR_GRAPHS = 10 # Number of graphs
+    NR_GRAPHS = 200 # Number of graphs
     SEED = 1  # A seed for the random number generator #40921
     np.random.seed(SEED)
     parser = argparse.ArgumentParser(description='Graphs Configuration')
@@ -108,8 +111,9 @@ def main():
     if args.size is not None:
         STEP_SIZE = args.size
     if args.graphs is not None:
-        NR_GRAPHS = args.graph
+        NR_GRAPHS = args.graphs
     create_graphs(NR_NODES, NR_GRAPHS, FOLDER, STEP_SIZE)
+    save_config(FOLDER, NR_NODES, STEP_SIZE, SEED)
 
 if __name__ == "__main__":
         main()    
