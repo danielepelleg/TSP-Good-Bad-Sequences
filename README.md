@@ -14,7 +14,7 @@
 - [Table of Contents](#table-of-contents)
 - [About The Project](#about-the-project)
 - [Getting Started](#getting-started)
-- [### Project Assignement](#-project-assignement)
+    - [Project Assignement](#project-assignement)
 - [LICENSE](#license)
 - [Contributors](#contributors)
 
