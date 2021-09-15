@@ -1,17 +1,11 @@
 from CreateDataset import get_coordinates_from_file, create_record, get_tour_length, get_sequence_length
-from test_algorithms import KNNAlgorithm
+from test_algorithms import KNNAlgorithm, dataset_setup
 from random import randint
 from itertools import permutations
+import matplotlib.pyplot as plt
 import argparse
 
 """ TODO
-    (0) Ottimizzare passaggio di parametri alle funzioni che ritornano l'algoritmo
-        - Effettuare il dataset split una sola volta e passare il dataset diviso agli algoritmi
-    (1) Provare Simulazioni di altri problemi
-    (2) Provare Simulazione da file
-    (3) Testare con grafo di dimensione maggiore
-    (4) Migliorare algoritmo greedy affinchè ricerchi sequenze migliori prima di arrendersi
-    (5) Aggiungere la funzione di plot
     (6) Commentare e rinominare files.py
 """
 
@@ -45,12 +39,13 @@ def get_best_sequence_permutation(sequence, distance_matrix, limit):
         :limit: the limit to use to choose the nodes of the sequence to permutate
     """
     #print(f'Permutating the Sequence: {sequence}\tLIMIT:{limit}')
-    permutation_tuple = list(permutations(node for node in sequence[1:-limit]))
+    permutation_tuple = list(permutations(node for node in sequence[1:limit]))
     permutation_list = [list(i) for i in permutation_tuple]
     for permutation in permutation_list:
         permutation.insert(0, sequence[0])
-        for i in range(-limit, 0):
-            permutation.append(sequence[i])
+        if limit is not None:
+            for i in range(limit, 0):
+                permutation.append(sequence[i])
     index = 0
     for idx, permutation in enumerate(permutation_list):
         if idx == 0:
@@ -88,6 +83,23 @@ def add_sequence_to_solution(sequence, solution, limit=None):
     for node in sequence[1:limit]:
         solution.append(node)
 
+def plot_solution(coords, solution, tour_length, file_name):
+    """ Plot the Solution
+    """
+    solution = [i-1 for i in solution]
+    plt.scatter(coords[:,0], coords[:,1])
+    n = len(coords)
+    
+    for idx in range(n-1):
+        i, next_i = solution[idx], solution[idx+1]
+        plt.plot([coords[i, 0], coords[next_i, 0]], [coords[i, 1], coords[next_i, 1]], 'k', lw=2, alpha=0.8)
+    
+    i, next_i = solution[-1], solution[0]
+    plt.plot([coords[i, 0], coords[next_i, 0]], [coords[i, 1], coords[next_i, 1]], 'k', lw=2, alpha=0.8)
+    plt.plot(coords[solution[0], 0], coords[solution[0], 1], 'x', markersize=10)
+    plt.title(f'{file_name}.tsp\nLength: {tour_length}')
+    plt.savefig(f"./TSPGraph-Test/Greedy Results/{file_name}.png")
+
 def greedy(coords, distance_matrix, starting_node=1, n=5):
     """ Greedy Algorithm
 
@@ -96,11 +108,13 @@ def greedy(coords, distance_matrix, starting_node=1, n=5):
         :coords: the list of the coords of the nodes
         :distance_matrix: the distance matrix of the nodes
         :starting_node: the node from which the solution starts
-        :n: the number of the node in the sequence
+        :n: the number of the node in the sequence#
     """
     # Insert the first node in the solution
     solution = [starting_node]
-    knn = KNNAlgorithm()
+    N_RECORDS = (100//n)*4
+    X_train, X_test, y_train, y_test = dataset_setup(N_RECORDS, n, 4.0)
+    knn = KNNAlgorithm(X_train, X_test, y_train, y_test)
     
     # Search Good Sequences to add to the solution
     while (len(solution) != len(distance_matrix)):
@@ -113,7 +127,7 @@ def greedy(coords, distance_matrix, starting_node=1, n=5):
         while(len(sequence) < n):
             neighbors_dict = get_node_neighbors(random_neighbor, distance_matrix, solution, sequence)
             # Number of Neighbors to take
-            target_range = round(30*len(neighbors_dict)/100)
+            target_range = round(5*len(neighbors_dict)/100)
             # Index of Random Neighbour
             k = randint(0, target_range)
             random_neighbor = list(neighbors_dict.keys())[k]
@@ -122,20 +136,26 @@ def greedy(coords, distance_matrix, starting_node=1, n=5):
             
             # Last Sequence
             if (len(sequence)-1 + len(solution)) == len(distance_matrix):
+                print(f'SEQ. {sequence}')
                 limit = n-len(sequence)     # Nodes in the solution used to close the sequence
+                print(limit)
                 # Close the Sequence
                 for i in range(0, limit):
                     sequence.append(solution[i])
+                print(sequence)
                 # Insert the best sequence permutation in the solution
+                if limit == 0:
+                    limit = None
+                else: limit = -limit
                 best_permutation = get_best_sequence_permutation(sequence, distance_matrix, limit)
-                add_sequence_to_solution(best_permutation, solution, -limit)
-                print(f'Complete!\n{solution}\n')
+                add_sequence_to_solution(best_permutation, solution, limit)
+                print(f'Last Sequence Appended: {best_permutation}\n\nSOLUTION: {solution}\nComplete!\n')
                 complete = True
                 break
         # Solution Completed
         if complete: 
             break
-        
+    
         # Get the Permutation List of sequences sorted from the best to the worst
         permutation_list_sorted = get_best_permutations_sorted(sequence, distance_matrix)
         for permutation in permutation_list_sorted:
@@ -144,26 +164,28 @@ def greedy(coords, distance_matrix, starting_node=1, n=5):
             # Good Sequence -> add it to the solution
             if knn.predict(sequence_record)[0] == 1:
                 add_sequence_to_solution(permutation, solution)
-                print(f'New Sequence Appended: {permutation}')
+                print(f'New Sequence Permutated Appended: {permutation}')
+                print(f'LEN. {len(solution)}')
                 complete = True
                 break
-        # All the permutations are bad. Add the best to the solution.
-        if not complete:
-            print(f'Sono a {len(solution)}%')
+        if (len(solution) >= (70*len(distance_matrix)//100) and not complete): #
+            # All the permutations are bad. Add the best to the solution.
+            print(f'Solution at {len(solution)}%')
             first_permutation = permutation_list_sorted[0]
             add_sequence_to_solution(first_permutation, solution)
-            print(f'New Sequence Appended: {permutation}')
+            print(f'Best Permutation Appended: {permutation}')
         # First Node in the Sequence = Last Node in the Solution
         starting_node = solution[-1]
     
     tour_length = get_tour_length(solution, distance_matrix)
     print(f'SOL. LENGTH: {len(solution)}')
     print(f'TOUR LENGTH: {tour_length}')
+    return solution, tour_length    
 
 def main():
     # Default Configuration if no args are given
-    TSP_FOLDER = "./TSPRandomGraph-Test"
-    PROBLEM_NUMBER = 1
+    TSP_FOLDER = "./TSPGraph-Test"
+    PROBLEM_NUMBER = 2
     N_SEQUENCE = 5
     starting_node = 1
     # Run's Configuration Settings
@@ -182,10 +204,12 @@ def main():
     if args.starting_node is not None:
         starting_node = args.starting_node
     if args.file is not None:
-        TSP_FOLDER = f''
+        TSP_FOLDER = "./TSPGraph-Test/Problems"
         file_name = args.file
     coords, distance_matrix = get_coordinates_from_file(TSP_FOLDER, file_name)
-    greedy(coords, distance_matrix, starting_node, N_SEQUENCE)
+    solution, tour_length = greedy(coords, distance_matrix, starting_node, N_SEQUENCE)
+    print(solution)
+    plot_solution(coords, solution, tour_length, file_name)
 
 if __name__ == "__main__":
     main()
