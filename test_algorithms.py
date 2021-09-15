@@ -62,7 +62,7 @@ def closestNumber(n, m) :
 
 """ Dataset Split into Training and Testing Sets
 """
-def dataset_setup(N_RECORDS, N_SEQUENCE, ERROR_TARGET):
+def dataset_setup(N_RECORDS = 80, N_SEQUENCE = 5, ERROR_TARGET = 4.0):
     N_GRAPHS = 500
     # Training 80% - Test 20%
     TEST_TARGET = 20
