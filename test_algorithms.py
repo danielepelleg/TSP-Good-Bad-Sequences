@@ -1,4 +1,4 @@
-from CreateDataset import get_coordinates_from_file, get_solution_from_file, get_sequence_length, get_sequence, create_record, get_tour_error, create_new_tour, get_tour_length
+from create_dataset import get_coordinates_from_file, get_solution_from_file, get_sequence_length, get_sequence, create_record, get_tour_error, create_new_tour, get_tour_length
 from random import seed, randint
 from csv import writer
 from itertools import permutations
