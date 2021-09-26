@@ -446,7 +446,6 @@ def main():
     # Default Configuration if no args are given
     N_GRAPHS = 500
     N_NODES = 100
-    N_RECORDS = 80
     N_SEQUENCE = 5
     ERROR_TARGET = 4
     parser = argparse.ArgumentParser(description='Dataset Configuration')
@@ -460,6 +459,8 @@ def main():
         N_GRAPHS = args.graphs
     if args.record is not None:
         N_RECORDS = args.record
+    else: 
+        N_RECORDS = (N_NODES//N_SEQUENCE)*4
     if args.sequence_nodes is not None:
         N_SEQUENCE = args.sequence_nodes
     if args.error_target is not None:
