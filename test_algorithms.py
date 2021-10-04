@@ -286,8 +286,8 @@ def test_algorithms(N_RECORDS, N_SEQUENCE, ERROR_TARGET):
     print(f'-----------------------------------\n')
 
 def main():
-    N_RECORDS = 80
-    N_SEQUENCE = 5
+    N_RECORDS = 56
+    N_SEQUENCE = 7
     ERROR_TARGET = 4.0
     parser = argparse.ArgumentParser(description='Test Configuration')
     parser.add_argument('--r', dest='records', type=int, help='Records for each graph of the dataset to use')
