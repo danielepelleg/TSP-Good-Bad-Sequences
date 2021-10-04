@@ -446,19 +446,19 @@ def main():
     # Default Configuration if no args are given
     N_GRAPHS = 500
     N_NODES = 100
-    N_SEQUENCE = 5
+    N_SEQUENCE = 7
     ERROR_TARGET = 4
     parser = argparse.ArgumentParser(description='Dataset Configuration')
     parser.add_argument('--g', dest='graphs', type=int, help='Number of graphs to use')
-    parser.add_argument('--r', dest='record', type=int, help='Record to Save for each Graph')
+    parser.add_argument('--r', dest='records', type=int, help='Records to Save for each Graph')
     parser.add_argument('--s', dest='sequence_nodes', type=int, help='Nodes in each sequence')
     parser.add_argument('--e', dest='error_target', type=float, help='Error target on the tour')
     args = parser.parse_args()
     # Set the Configuration Parameter
     if args.graphs is not None:
         N_GRAPHS = args.graphs
-    if args.record is not None:
-        N_RECORDS = args.record
+    if args.records is not None:
+        N_RECORDS = args.records
     else: 
         N_RECORDS = (N_NODES//N_SEQUENCE)*4
     if args.sequence_nodes is not None:
