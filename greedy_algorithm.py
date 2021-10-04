@@ -1,13 +1,12 @@
-from CreateDataset import get_coordinates_from_file, create_record, get_tour_length, get_sequence_length
-from test_algorithms import KNNAlgorithm, dataset_setup
-from random import randint
+from create_dataset import get_coordinates_from_file, create_record, get_tour_length, get_sequence_length
+from test_algorithms import KNNAlgorithm, dataset_setup, RandomForestAlgoritm, DecisionTreeAlgorithm, NaiveBayesAlgorithm, AdaBoostAlgorithm, LogisticRegressionAlgorithm
+from random import randint, seed
 from itertools import permutations
+from csv import writer
 import matplotlib.pyplot as plt
 import argparse
-
-""" TODO
-    (6) Commentare e rinominare files.py
-"""
+import time
+import os
 
 def get_node_neighbors(node, distance_matrix, solution, sequence):
     """ Get the neighbors of the given node
@@ -100,7 +99,48 @@ def plot_solution(coords, solution, tour_length, file_name):
     plt.title(f'{file_name}.tsp\nLength: {tour_length}')
     plt.savefig(f"./TSPGraph-Test/Greedy Results/{file_name}.png")
 
-def greedy(coords, distance_matrix, starting_node=1, n=5):
+def save_tsp_solution(file_name, solution, tour_length, algorythm, neighbors):
+    """ 
+        Utility function to save the solution graph in a folder as a TOUR file
+    """
+    timestamp = time.strftime('%a %b %d %H:%M:%S %Y')
+    # Save the TSP file
+    with open(f'./TSPGraph-Test/Greedy Results/{file_name}_{algorythm}.tour', 'w') as sol_file:
+        sol_file.write(f'NAME: {file_name}\n')
+        sol_file.write(f'COMMENT: Length = {tour_length}\n')
+        sol_file.write(f'COMMENT: Found by Greedy - Neighbors {neighbors}% [{algorythm}] {timestamp}\n')
+        sol_file.write(f'TYPE: TOUR\n')
+        sol_file.write(f'DIMENSION: {len(solution)}\n')
+        sol_file.write(f'TOUR_SECTION\n')
+        for node in solution:
+            sol_file.writelines(f'{node}')
+            sol_file.write("\n")
+        sol_file.write(f'-1\n')
+        sol_file.write('EOF\n')
+        sol_file.close()
+
+def save_run(file_name, N_SEQUENCE, solution, sol_length, SEED):
+    record = [sol_length, str(solution), N_SEQUENCE]
+    if not os.path.exists('./TSPGraph-Test/Simulations/'):
+        os.makedirs('./TSPGraph-Test/Simulations/')
+    else:
+        if not os.path.exists(f'./TSPGraph-Test/Simulations/{file_name}_SEED{SEED}.csv'):
+            columns = ['Length Solution', 'Solution', 'Sequence Length']
+            with open(f'./TSPGraph-Test/Simulations/{file_name}_SEED{SEED}.csv', 'w', newline='') as csv_file:
+                # creating a csv writer object 
+                csvwriter = writer(csv_file, delimiter=';')
+                # writing the fields 
+                csvwriter.writerow(columns)
+                csvwriter.writerow(record)
+        else:
+            with open(f'./TSPGraph-Test/Simulations/{file_name}_SEED{SEED}.csv', 'a', newline='') as csv_file:
+                # Pass this file object to csv.writer() and get a writer object
+                writer_object = writer(csv_file, delimiter=';')
+            
+                # Pass the list as an argument into the writerow()
+                writer_object.writerow(record)  
+
+def greedy(coords, distance_matrix, classifier, starting_node=1, N_SEQUENCE=5, N_NEIGHBORS = 8, SEED = 1):
     """ Greedy Algorithm
 
         The choices of the algorithm are guided by the scores of the ML algorithms.
@@ -108,26 +148,31 @@ def greedy(coords, distance_matrix, starting_node=1, n=5):
         :coords: the list of the coords of the nodes
         :distance_matrix: the distance matrix of the nodes
         :starting_node: the node from which the solution starts
-        :n: the number of the node in the sequence#
+        :N_SEQUENCE: the number of the node in the sequence#
     """
+    TO = False
+    if SEED is not None: 
+        # Set the Seed
+        print(f'SEED: {SEED}')
+        seed(SEED)
     # Insert the first node in the solution
     solution = [starting_node]
-    N_RECORDS = (100//n)*4
-    X_train, X_test, y_train, y_test = dataset_setup(N_RECORDS, n, 4.0)
-    knn = KNNAlgorithm(X_train, X_test, y_train, y_test)
+    timeout = 0
     
     # Search Good Sequences to add to the solution
     while (len(solution) != len(distance_matrix)):
+        # Increment timeout
+        timeout += 1
         complete = False
         # Set the first node in the sequence
         sequence = [starting_node]
         random_neighbor = starting_node
         
         # Build the Sequence
-        while(len(sequence) < n):
+        while(len(sequence) < N_SEQUENCE):
             neighbors_dict = get_node_neighbors(random_neighbor, distance_matrix, solution, sequence)
             # Number of Neighbors to take
-            target_range = round(5*len(neighbors_dict)/100)
+            target_range = round(N_NEIGHBORS*len(neighbors_dict)/100)
             # Index of Random Neighbour
             k = randint(0, target_range)
             random_neighbor = list(neighbors_dict.keys())[k]
@@ -137,7 +182,7 @@ def greedy(coords, distance_matrix, starting_node=1, n=5):
             # Last Sequence
             if (len(sequence)-1 + len(solution)) == len(distance_matrix):
                 print(f'SEQ. {sequence}')
-                limit = n-len(sequence)     # Nodes in the solution used to close the sequence
+                limit = N_SEQUENCE-len(sequence)     # Nodes in the solution used to close the sequence
                 print(limit)
                 # Close the Sequence
                 for i in range(0, limit):
@@ -155,44 +200,58 @@ def greedy(coords, distance_matrix, starting_node=1, n=5):
         # Solution Completed
         if complete: 
             break
-    
+        
+        print('Cerco permutazioni ...')
         # Get the Permutation List of sequences sorted from the best to the worst
         permutation_list_sorted = get_best_permutations_sorted(sequence, distance_matrix)
+        print('Fatto!')
         for permutation in permutation_list_sorted:
             # Create the record to pass to the ML algorithm
             sequence_record = [create_record(permutation, coords, distance_matrix, None)]
             # Good Sequence -> add it to the solution
-            if knn.predict(sequence_record)[0] == 1:
+            if classifier.predict(sequence_record)[0] == 1:
                 add_sequence_to_solution(permutation, solution)
-                print(f'New Sequence Permutated Appended: {permutation}')
+                print(f'New Permutated Sequence Appended: {permutation}')
                 print(f'LEN. {len(solution)}')
+                # Reset timeout
+                timeout = 0
                 complete = True
                 break
-        if (len(solution) >= (70*len(distance_matrix)//100) and not complete): #
+        if (len(solution) >= (70*len(distance_matrix)//100) and not complete) or timeout > round(N_NEIGHBORS*(3)):
+            if timeout > round(N_NEIGHBORS*(3)):
+                TO = True
+                print('Timeout Exceeded')
             # All the permutations are bad. Add the best to the solution.
-            print(f'Solution at {len(solution)}%')
+            print(f'Solution at {(len(solution)*100)//len(distance_matrix)}%')
             first_permutation = permutation_list_sorted[0]
             add_sequence_to_solution(first_permutation, solution)
             print(f'Best Permutation Appended: {permutation}')
+            # Reset timeout
+            timeout = 0
         # First Node in the Sequence = Last Node in the Solution
         starting_node = solution[-1]
     
     tour_length = get_tour_length(solution, distance_matrix)
     print(f'SOL. LENGTH: {len(solution)}')
     print(f'TOUR LENGTH: {tour_length}')
+    print(solution)
+    print(f'TO: {TO}')
     return solution, tour_length    
 
 def main():
     # Default Configuration if no args are given
     TSP_FOLDER = "./TSPGraph-Test"
-    PROBLEM_NUMBER = 2
-    N_SEQUENCE = 5
+    PROBLEM_NUMBER = 1
+    N_SEQUENCE = 7
+    N_NEIGHBORS = 5
+    SEED = None
     starting_node = 1
     # Run's Configuration Settings
     parser = argparse.ArgumentParser(description='Dataset Configuration')
     parser.add_argument('--p', dest='problem', type=int, help='Number of the problem to use')
     parser.add_argument('--s', dest='sequence', type=int, help='Number of the sequence to use to solve the problem')
-    parser.add_argument('--i', dest='starting_node', type=int, help='Number of the starting node to use')
+    parser.add_argument('--i', dest='starting_node', type=int, help='Number of the starting node of the solution')
+    parser.add_argument('--S', dest='seed', type=int, help='Seed used for the choice of a random number')
     parser.add_argument('--file', dest='file', type=str, help='Name of the file to use')
     args = parser.parse_args()
     # Set the Configuration Parameter
@@ -206,10 +265,16 @@ def main():
     if args.file is not None:
         TSP_FOLDER = "./TSPGraph-Test/Problems"
         file_name = args.file
+    if args.seed is not None:
+        SEED = args.seed
     coords, distance_matrix = get_coordinates_from_file(TSP_FOLDER, file_name)
-    solution, tour_length = greedy(coords, distance_matrix, starting_node, N_SEQUENCE)
-    print(solution)
+    N_RECORDS = (100//N_SEQUENCE)*4
+    X_train, X_test, y_train, y_test = dataset_setup(N_RECORDS, N_SEQUENCE, 4.0)
+    classifier = NaiveBayesAlgorithm(X_train, X_test, y_train, y_test)
+    solution, tour_length = greedy(coords, distance_matrix, classifier, starting_node, N_SEQUENCE, N_NEIGHBORS, SEED)
+    #save_tsp_solution(file_name, solution, tour_length, type(classifier).__name__, N_NEIGHBORS)
     plot_solution(coords, solution, tour_length, file_name)
+    save_run(file_name, N_SEQUENCE, solution, tour_length, SEED)
 
 if __name__ == "__main__":
     main()
