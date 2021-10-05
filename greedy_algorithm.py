@@ -150,7 +150,6 @@ def greedy(coords, distance_matrix, classifier, starting_node=1, N_SEQUENCE=5, N
         :starting_node: the node from which the solution starts
         :N_SEQUENCE: the number of the node in the sequence#
     """
-    TO = False
     if SEED is not None: 
         # Set the Seed
         print(f'SEED: {SEED}')
@@ -201,10 +200,10 @@ def greedy(coords, distance_matrix, classifier, starting_node=1, N_SEQUENCE=5, N
         if complete: 
             break
         
-        print('Cerco permutazioni ...')
+        print('Permutating Sequences ...')
         # Get the Permutation List of sequences sorted from the best to the worst
         permutation_list_sorted = get_best_permutations_sorted(sequence, distance_matrix)
-        print('Fatto!')
+        print('Done!')
         for permutation in permutation_list_sorted:
             # Create the record to pass to the ML algorithm
             sequence_record = [create_record(permutation, coords, distance_matrix, None)]
@@ -219,7 +218,6 @@ def greedy(coords, distance_matrix, classifier, starting_node=1, N_SEQUENCE=5, N
                 break
         if (len(solution) >= (70*len(distance_matrix)//100) and not complete) or timeout > round(N_NEIGHBORS*(3)):
             if timeout > round(N_NEIGHBORS*(3)):
-                TO = True
                 print('Timeout Exceeded')
             # All the permutations are bad. Add the best to the solution.
             print(f'Solution at {(len(solution)*100)//len(distance_matrix)}%')
@@ -235,7 +233,6 @@ def greedy(coords, distance_matrix, classifier, starting_node=1, N_SEQUENCE=5, N
     print(f'SOL. LENGTH: {len(solution)}')
     print(f'TOUR LENGTH: {tour_length}')
     print(solution)
-    print(f'TO: {TO}')
     return solution, tour_length    
 
 def main():
@@ -272,7 +269,7 @@ def main():
     X_train, X_test, y_train, y_test = dataset_setup(N_RECORDS, N_SEQUENCE, 4.0)
     classifier = NaiveBayesAlgorithm(X_train, X_test, y_train, y_test)
     solution, tour_length = greedy(coords, distance_matrix, classifier, starting_node, N_SEQUENCE, N_NEIGHBORS, SEED)
-    #save_tsp_solution(file_name, solution, tour_length, type(classifier).__name__, N_NEIGHBORS)
+    save_tsp_solution(file_name, solution, tour_length, type(classifier).__name__, N_NEIGHBORS)
     plot_solution(coords, solution, tour_length, file_name)
     save_run(file_name, N_SEQUENCE, solution, tour_length, SEED)
 
