@@ -14,7 +14,7 @@
 - [Table of Contents](#table-of-contents)
 - [About The Project](#about-the-project)
 - [Getting Started](#getting-started)
-    - [Project Assignement](#project-assignement)
+- [### Project Assignement](#-project-assignement)
 - [LICENSE](#license)
 - [Contributors](#contributors)
 
@@ -36,6 +36,6 @@ Distributed under the GPL License. See `LICENSE` for more information.
 
 [Daniele Pellegrini](https://github.com/danielepelleg) - 162779
 
-[Umberto Maggiorelli](https://github.com/umberto-maggiorelli) - 
+[Umberto Maggiorelli](https://github.com/umberto-maggiorelli) - 163462
 
 
